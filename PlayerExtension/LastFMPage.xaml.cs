@@ -36,10 +36,7 @@ namespace PlayerExtension
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter != null)
-            {
-
-            }
+            SettingPaneHelper.TryAddPolicyCommamd();
 
             base.OnNavigatedTo(e);
         }

@@ -136,6 +136,7 @@
     <Compile Include="ExtensionViewModel\FirstPage.cs" />
     <Compile Include="ExtensionViewModel\LastFMConfig.cs" />
     <Compile Include="ExtensionViewModel\PlayerConnectorConfig.cs" />
+    <Compile Include="ExtensionViewModel\SettingPaneHelper.cs" />
     <Compile Include="ExtensionViewModel\VKConfig.cs" />
     <Compile Include="ExtensionViewModel\VKScopeList.cs" />
     <Compile Include="LastFMPage.xaml.cs">

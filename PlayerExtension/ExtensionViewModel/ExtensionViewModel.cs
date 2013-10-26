@@ -59,7 +59,7 @@ namespace PlayerExtension
             ExtConfig.LastFMConfigChanged += OnLastFMConfigChanged;
         }
 
-        void OnConfigComplite(ConfigCompliteEvent e)
+        private void OnConfigComplite(ConfigCompliteEvent e)
         {
             mMainPage = e.mainPage;
             InitModel();
@@ -82,7 +82,7 @@ namespace PlayerExtension
             }
         }
 
-        async void OnSyncStarted(StartSyncEvent e)
+        private async void OnSyncStarted(StartSyncEvent e)
         {
             if(!mBIsRecoveredConnectorConfig)
                 await TryToRecoverConnectorConfig();
@@ -91,7 +91,7 @@ namespace PlayerExtension
                 await RunSynchronization();
         }
 
-        void OnSyncStoped(StopSyncEvent e)
+        private void OnSyncStoped(StopSyncEvent e)
         {
             StopSynchronization();
         }

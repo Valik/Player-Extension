@@ -43,10 +43,7 @@ namespace PlayerExtension
 
         protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter != null)
-            {
-
-            }
+            SettingPaneHelper.TryAddPolicyCommamd();
 
             await InitDevicesList();
             LoadSavedState();

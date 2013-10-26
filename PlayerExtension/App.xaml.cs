@@ -28,12 +28,7 @@ namespace PlayerExtension
     /// </summary>
     sealed partial class App : Application
     {
-        ExtensionViewModel mViewModel;
-        private bool mEventRegistered = false;
-
-        private ResourceLoader mResLoader = new ResourceLoader();
-        private String mPolicyStr = "Privacy Policy";
-        private const String mPolicyURL = "https://drive.google.com/folderview?id=0B1NX8leIQmHlOHZ5Qm5KYXVYSUE&usp=sharing";
+        private ExtensionViewModel mViewModel;
 
         /// <summary>
         /// Инициализирует одноэлементный объект приложения.  Это первая выполняемая строка разрабатываемого
@@ -56,7 +51,6 @@ namespace PlayerExtension
         {
             Frame rootFrame = Window.Current.Content as Frame;
 
-            SetPolicyCommand();
             // Не повторяйте инициализацию приложения, если в окне уже имеется содержимое,
             // только обеспечьте активность окна
             if (rootFrame == null)
@@ -97,16 +91,6 @@ namespace PlayerExtension
             // Обеспечение активности текущего окна
             Window.Current.Activate();
         }
-
-        private void SetPolicyCommand()
-        {
-            mPolicyStr = mResLoader.GetString("privacyPolicy");
-            if (mEventRegistered)
-                SettingsPane.GetForCurrentView().CommandsRequested -= OnCommandsRequested;
-
-            SettingsPane.GetForCurrentView().CommandsRequested += OnCommandsRequested;
-            mEventRegistered = true;
-        }
         /// <summary>
         /// Вызывается при приостановке выполнения приложения. Состояние приложения сохраняется
         /// без учета информации о том, будет ли оно завершено или возобновлено с неизменным
@@ -121,20 +105,6 @@ namespace PlayerExtension
             await SuspensionManager.SaveAsync();
 
             deferral.Complete();
-        } 
-        
-        void OnCommandsRequested(SettingsPane sender, SettingsPaneCommandsRequestedEventArgs args)
-        {
-            UICommandInvokedHandler handler = new UICommandInvokedHandler(onSettingsCommand);
-
-            SettingsCommand policyCommand = new SettingsCommand("privacyPolicy", mPolicyStr, handler);
-            args.Request.ApplicationCommands.Add(policyCommand);
-        }
-
-        async void onSettingsCommand(IUICommand command)
-        {
-            SettingsCommand settingsCommand = (SettingsCommand)command;
-            await Windows.System.Launcher.LaunchUriAsync(new Uri(mPolicyURL));
         }
     }
 }

@@ -28,7 +28,7 @@ namespace PlayerExtension
     /// </summary>
     public sealed partial class PlayerExtensionPage : PlayerExtension.Common.LayoutAwarePage
     {
-        enum SyncState : int
+        private enum SyncState : int
         {
             READY = 0,
             STARTED = 1,
@@ -88,13 +88,10 @@ namespace PlayerExtension
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter != null)
-            {
-
-            }
+            SettingPaneHelper.TryAddPolicyCommamd();
 
             if (ConfigComplite != null)
-                ConfigComplite.Invoke(new ConfigCompliteEvent(this));
+                ConfigComplite(new ConfigCompliteEvent(this));
 
             base.OnNavigatedTo(e);
         }
