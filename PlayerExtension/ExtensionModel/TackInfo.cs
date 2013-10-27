@@ -54,6 +54,9 @@ namespace PlayerExtension.ExtensionModel
         public Uri trackURI
         { get; set; }
 
-
+        public override int GetHashCode()
+        {
+            return (artist + trackName).GetHashCode();
+        }
     }
 }

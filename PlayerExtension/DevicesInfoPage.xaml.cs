@@ -101,6 +101,9 @@ namespace PlayerExtension
             libraryPathBox.Visibility = Windows.UI.Xaml.Visibility.Visible;
             pathTextBox.Text = mLibrary.Path;
 
+            if (!ExtConfig.playerConnectorConfig.IsDevicesSelected)
+                return;
+
             mDevInfo = ExtConfig.playerConnectorConfig.selectedDevices;
 
             libraryButton.Background = new SolidColorBrush(Colors.BlueViolet);
@@ -134,7 +137,8 @@ namespace PlayerExtension
             ListViewItem selectedItem = devicesList.SelectedItem as ListViewItem;
             if (selectedItem == null)
                 return;
-            String deviceName = (String)selectedItem.Content;
+
+            String deviceName = selectedItem.Content as string;
 
             var currentState = Windows.UI.ViewManagement.ApplicationView.Value;
             if (currentState == Windows.UI.ViewManagement.ApplicationViewState.Snapped && !Windows.UI.ViewManagement.ApplicationView.TryUnsnap())
@@ -251,21 +255,22 @@ namespace PlayerExtension
 
         private async void forwardButton_Click(object sender, RoutedEventArgs e)
         {
-            if(mDevInfo == null || mDevInfo.Count == 0)
-            {
-                MessageDialog dialog = new MessageDialog(mErrorLoader.GetString("devicesPlayerError"));
-                await dialog.ShowAsync();
-                return;
-            }
+            //if (mDevInfo == null || mDevInfo.Count == 0)
+            //{
+            //    MessageDialog dialog = new MessageDialog(mErrorLoader.GetString("devicesPlayerError"));
+            //    await dialog.ShowAsync();
+            //    return;
+            //}
 
-            if(mLibrary == null)
+            if (mLibrary == null)
             {
                 MessageDialog dialog = new MessageDialog(mErrorLoader.GetString("devicesLibraryError"));
                 await dialog.ShowAsync();
                 return;
             }
 
-            PlayerConnectorConfig connectorConfig = new PlayerConnectorConfig(mDevInfo, mLibrary);
+            PlayerConnectorConfig connectorConfig = mDevInfo == null ? new PlayerConnectorConfig(mLibrary) :
+                                                                       new PlayerConnectorConfig(mDevInfo, mLibrary);
             ExtConfig.playerConnectorConfig = connectorConfig;
 
             GoToNextPage();

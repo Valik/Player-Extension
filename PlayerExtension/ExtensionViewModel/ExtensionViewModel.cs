@@ -130,15 +130,17 @@ namespace PlayerExtension
             ApplicationDataCompositeValue savingAppConfig = new ApplicationDataCompositeValue();
 
             savingAppConfig.Add("musicLibraryFolder", config.musicLibraryFolder.Path);
-
-            ApplicationDataCompositeValue devicesInfo = new ApplicationDataCompositeValue();
-            foreach (var curDevice in config.selectedDevices)
-            {
-                devicesInfo.Add(curDevice.deviceName, curDevice.deviceFolder.Name);
-            }
-
             localContainer.Values["musicLibraryConfig"] = savingAppConfig;
-            localContainer.Values["devicesInfo"] = devicesInfo;
+
+            if (config.IsDevicesSelected)
+            {
+                ApplicationDataCompositeValue devicesInfo = new ApplicationDataCompositeValue();
+                foreach (var curDevice in config.selectedDevices)
+                {
+                    devicesInfo.Add(curDevice.deviceName, curDevice.deviceFolder.Name);
+                }
+                localContainer.Values["devicesInfo"] = devicesInfo;
+            }
         }
 
         private async Task<bool> TryToRecoverSavingConfig()
@@ -214,29 +216,19 @@ namespace PlayerExtension
         private async Task TryToRecoverConnectorConfig()
         {
             ApplicationDataContainer localContainer = ApplicationData.Current.LocalSettings;
-            if (localContainer.Values["musicLibraryConfig"] == null ||
-                localContainer.Values["devicesInfo"] == null)
+            if (!localContainer.Values.ContainsKey("musicLibraryConfig") &&
+                !localContainer.Values.ContainsKey("devicesInfo"))
             {
                 mBIsRecoveredConnectorConfig = false;
                 TroubleWithRecoveringConnectorConfig();
                 return;
             }
 
-            ApplicationDataCompositeValue musicLibraryConfigCont = (ApplicationDataCompositeValue)localContainer.Values["musicLibraryConfig"];
-            ApplicationDataCompositeValue devicesInfo = (ApplicationDataCompositeValue)localContainer.Values["devicesInfo"];
-
-            List<DeviceInfo> devices = await GetDevicesInfo(devicesInfo);
-            if (devices == null)
-            {
-                mBIsRecoveredConnectorConfig = false;
-                OnBadDevice(new TroubleWithDeviceEvent("Плеер или папка на плеере сейчас не доступны. Подключи плеер или выбери другую папку. А может место кончилось.", "", ""));
-                return;
-            }
-
+            ApplicationDataCompositeValue musicLibraryConfigCont = localContainer.Values["musicLibraryConfig"] as ApplicationDataCompositeValue;
             StorageFolder musicLibraryFolder = null;
             try
             {
-                musicLibraryFolder = await StorageFolder.GetFolderFromPathAsync((String)musicLibraryConfigCont["musicLibraryFolder"]);
+                musicLibraryFolder = await StorageFolder.GetFolderFromPathAsync(musicLibraryConfigCont["musicLibraryFolder"] as string);
             }
             catch (Exception)
             {
@@ -245,7 +237,21 @@ namespace PlayerExtension
                 return;
             }
 
-            PlayerConnectorConfig connectorConfig = new PlayerConnectorConfig(devices, musicLibraryFolder);
+            ApplicationDataCompositeValue devicesInfo = localContainer.Values["devicesInfo"] as ApplicationDataCompositeValue;
+            List<DeviceInfo> devices = null;
+            if (devicesInfo != null)
+            {
+                devices = await GetDevicesInfo(devicesInfo);
+                if (devices == null)
+                {
+                    mBIsRecoveredConnectorConfig = false;
+                    OnBadDevice(new TroubleWithDeviceEvent("Плеер или папка на плеере сейчас не доступны. Подключи плеер или выбери другую папку. А может место кончилось.", "", ""));
+                    return;
+                }
+            }
+
+            PlayerConnectorConfig connectorConfig = devices == null ? new PlayerConnectorConfig(musicLibraryFolder) :
+                                                                      new PlayerConnectorConfig(devices, musicLibraryFolder);
             if (mBIsRecoveredConnectorConfig)
                 return;
             ExtConfig.playerConnectorConfig = connectorConfig;
@@ -339,21 +345,21 @@ namespace PlayerExtension
             mBIsSynchronized = false;
         }
 
-        void OnLastFMConfigChanged(LastFMConfig config)
+        private void OnLastFMConfigChanged(LastFMConfig config)
         {
             SaveLastConfig(config);
             if (mBIsModelInit)
                 mModel.UpdateLastFMConfig(config);
         }
 
-        void OnVKConfigChanged(VKConfig config)
+        private void OnVKConfigChanged(VKConfig config)
         {
             SaveVKConfig(config);
             if (mBIsModelInit)
                 mModel.UpdateVKConfig(config);
         }
 
-        void OnConnectorConfigChanged(PlayerConnectorConfig config)
+        private void OnConnectorConfigChanged(PlayerConnectorConfig config)
         {
             SaveConnectorConfig(config);
             mBIsRecoveredConnectorConfig = true;
@@ -361,7 +367,7 @@ namespace PlayerExtension
                 mModel.UpdatePlayerConnectorConfig(config);
         }
 
-        async void OnTrackComplite(TrackSynchronizedEvent e)
+        private async void OnTrackComplite(TrackSynchronizedEvent e)
         {
             await mMainPage.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
@@ -369,7 +375,7 @@ namespace PlayerExtension
             });
         }
 
-        async void OnNoTracksToSync()
+        private async void OnNoTracksToSync()
         {
             await mMainPage.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
@@ -377,7 +383,7 @@ namespace PlayerExtension
             });
         }
 
-        async void OnBadNick(BadUserNickEvent e)
+        private async void OnBadNick(BadUserNickEvent e)
         {
             StopSynchronization();
             await mMainPage.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
@@ -387,7 +393,7 @@ namespace PlayerExtension
                 });
         }
 
-        async void OnBadToken(BadAccessTokenEvent e)
+        private async void OnBadToken(BadAccessTokenEvent e)
         {
             StopSynchronization();
             await mMainPage.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
@@ -396,7 +402,7 @@ namespace PlayerExtension
             });
         }
         
-        async void OnBadLibrary(TroubleWithMusicLibraryFolderEvent e)
+        private async void OnBadLibrary(TroubleWithMusicLibraryFolderEvent e)
         {
             StopSynchronization();
             await mMainPage.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
@@ -406,7 +412,7 @@ namespace PlayerExtension
             });
         }
 
-        async void OnBadDevice(TroubleWithDeviceEvent e)
+        private async void OnBadDevice(TroubleWithDeviceEvent e)
         {
             StopSynchronization();
             await mMainPage.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
@@ -417,7 +423,7 @@ namespace PlayerExtension
             });
         }
 
-        async void TroubleWithRecoveringConnectorConfig()
+        private async void TroubleWithRecoveringConnectorConfig()
         {
             StopSynchronization();
             await mMainPage.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>

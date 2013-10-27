@@ -12,7 +12,7 @@ namespace PlayerExtension.ExtensionModel
 {
     internal class VKSearcher
     {
-        private static readonly int mLimitAttemptsSearch = 5;
+        private static readonly int mLimitAttemptsSearch = 2;
         private static readonly int mDelay = 500;
 
         private VKConfig mConfig;
@@ -20,7 +20,6 @@ namespace PlayerExtension.ExtensionModel
         private int mNumberOfAttemptsSearch = 0;
 
         private bool mBBadAccessToken = false;
-
 
         public delegate void BadAccessTokenHandler(BadAccessTokenEvent e);
         public event BadAccessTokenHandler BadAccessToken;
@@ -36,7 +35,7 @@ namespace PlayerExtension.ExtensionModel
             get { return mBBadAccessToken; }
         }
 
-        public List<TrackInfo> FillTracksURI(List<TrackInfo> tracks)
+        public IEnumerable<TrackInfo> FillTracksURI(IEnumerable<TrackInfo> tracks)
         {
             List<TrackInfo> failedtracks = new List<TrackInfo>();
             mBBadAccessToken = false;

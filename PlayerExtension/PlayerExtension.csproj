@@ -117,6 +117,7 @@
     <Compile Include="Common\RichTextColumns.cs" />
     <Compile Include="Common\SuspensionManager.cs" />
     <Compile Include="ExtensionModel\BadUserNickEvent.cs" />
+    <Compile Include="ExtensionModel\CustomEqualityComparer.cs" />
     <Compile Include="ExtensionModel\TrackSynchronizedEvent.cs" />
     <Compile Include="ExtensionViewModel\ConfigCompliteEvent.cs" />
     <Compile Include="DevicesInfoPage.xaml.cs">

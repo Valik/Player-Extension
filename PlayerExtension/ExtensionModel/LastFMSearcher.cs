@@ -28,7 +28,7 @@ namespace PlayerExtension.ExtensionModel
         public void UpdateConfig(LastFMConfig config)
         { mConfig = config; }
 
-        public List<TrackInfo> GetTracks()
+        public IEnumerable<TrackInfo> GetTracks()
         {
             switch (mConfig.maskSearchType)
             {

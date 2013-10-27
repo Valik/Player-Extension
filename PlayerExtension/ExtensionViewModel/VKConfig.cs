@@ -13,9 +13,6 @@ namespace PlayerExtension
         public VKConfig(string accessToken)
         { mAccessToken = accessToken; }
 
-        public static VKConfig Init(string accessToken)
-        { return new VKConfig(accessToken); }
-
         public static String API_ID
         { get { return "3432583"; } }
 

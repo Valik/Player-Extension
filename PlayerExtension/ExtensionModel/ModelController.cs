@@ -22,9 +22,11 @@ namespace PlayerExtension.ExtensionModel
         public event BadLibraryHandler BadLibrary;
         public event BadDeviceHandler BadDevice;
 
-        LastFMSearcher mLastFMSeacher;
-        VKSearcher mVKSearcher;
-        PlayerConnector mPlayerConnector;
+        private LastFMSearcher mLastFMSeacher;
+        private VKSearcher mVKSearcher;
+        private PlayerConnector mPlayerConnector;
+
+        private List<TrackInfo> mDownloadingTracks = new List<TrackInfo>();
 
         public ModelController()
         {
@@ -62,29 +64,64 @@ namespace PlayerExtension.ExtensionModel
 
         public async Task Synchronize()
         {
-            List<TrackInfo> lovedTraks = mLastFMSeacher.GetTracks();
-            if (lovedTraks.Count == 0)
+            IEnumerable<TrackInfo> lovedTraks = mLastFMSeacher.GetTracks();
+            if (!lovedTraks.Any())
                 return;
-            List<TrackInfo> tracksWithoutUri = mVKSearcher.FillTracksURI(lovedTraks);
+
+            IEnumerable<TrackInfo> newTracks = GetNewTracks(lovedTraks);
+
+            if (!newTracks.Any())
+            {
+                OnNoTracksToSyncronization();
+                return;
+            }
+
+            IEnumerable<TrackInfo> tracksWithoutUri = mVKSearcher.FillTracksURI(newTracks);
             if (mVKSearcher.IsBadAccessToken)
                 return;
-            List<TrackInfo> downloadingTraks = GetDownloadingTracks(lovedTraks, tracksWithoutUri);
-            await mPlayerConnector.SendTracksToDevices(downloadingTraks);
+
+            IEnumerable<TrackInfo> downloadedTraks = Except(newTracks, tracksWithoutUri);
+
+            await mPlayerConnector.SendTracksToDevices(downloadedTraks);
+
+            SaveDownloadedTracks(downloadedTraks);
         }
 
-        private List<TrackInfo> GetDownloadingTracks(List<TrackInfo> lovedTraks, List<TrackInfo> tracksWithoutUri)
+
+
+        private IEnumerable<TrackInfo> GetNewTracks(IEnumerable<TrackInfo> lovedTraks)
         {
-            if (tracksWithoutUri.Count > 0)
+            if (mDownloadingTracks != null)
             {
-                List<TrackInfo> downloadingTraks = new List<TrackInfo>();
-                foreach (TrackInfo curTrack in lovedTraks)
-                {
-                    if (!tracksWithoutUri.Contains(curTrack))
-                        downloadingTraks.Add(curTrack);
-                }
-                return downloadingTraks;
+                var newTracks = Except(lovedTraks, mDownloadingTracks);
+                return newTracks;
             }
             return lovedTraks;
+        }
+
+        private void SaveDownloadedTracks(IEnumerable<TrackInfo> downloadingTraks)
+        {
+            IEnumerable<TrackInfo> newDownloadedTracks = Except(downloadingTraks, mDownloadingTracks);
+            mDownloadingTracks.AddRange(newDownloadedTracks);
+        }
+
+        private static IEnumerable<TrackInfo> Except(IEnumerable<TrackInfo> @this, IEnumerable<TrackInfo> that)
+        {
+            Func<TrackInfo, TrackInfo, bool> comparer = (x, y) =>
+            {
+                return x.artist == y.artist &&
+                       x.trackName == y.trackName;
+            };
+
+            if (that.Any())
+            {
+                IEnumerable<TrackInfo> exceptTraks = @this.Except(that, new CustomEqualityComparer<TrackInfo>(comparer)).ToList();
+                return exceptTraks;
+            }
+            else
+            {
+                return @this;
+            }
         }
 
         void OnTrackSynchronized(TrackSynchronizedEvent e)

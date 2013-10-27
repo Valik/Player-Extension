@@ -9,6 +9,8 @@ namespace PlayerExtension
 {
     public class PlayerConnectorConfig
     {
+        private bool mIsDevicesSelected;
+
         private List<DeviceInfo> mSelectedDevices;
         private StorageFolder mMusicLibraryFolder;
 
@@ -16,10 +18,15 @@ namespace PlayerExtension
         {
             mSelectedDevices = selectedDevices;
             mMusicLibraryFolder = musicLibraryFolder;
+
+            mIsDevicesSelected = true;
         }
 
-        public static PlayerConnectorConfig Init(List<DeviceInfo> selectedDevices, StorageFolder musicLibraryFolder)
-        { return new PlayerConnectorConfig(selectedDevices, musicLibraryFolder); }
+        public PlayerConnectorConfig(StorageFolder musicLibraryFolder)
+        {
+            mMusicLibraryFolder = musicLibraryFolder;
+            mIsDevicesSelected = false;
+        }
 
         public List<DeviceInfo> selectedDevices
         {
@@ -29,6 +36,11 @@ namespace PlayerExtension
         public StorageFolder musicLibraryFolder
         {
             get { return mMusicLibraryFolder; }
+        }
+
+        public bool IsDevicesSelected
+        {
+            get { return mIsDevicesSelected; }
         }
     }
 

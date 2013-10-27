@@ -8,6 +8,7 @@ using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Storage;
 using Windows.Networking.BackgroundTransfer;
+using System.Diagnostics;
 
 namespace PlayerExtension.ExtensionModel
 {
@@ -40,25 +41,32 @@ namespace PlayerExtension.ExtensionModel
             public Downloader(PlayerConnector connector)
             { mConnector = connector; }
 
-            public async Task DownloadTracks(List<TrackInfo> tracks)
+            public async Task DownloadTracks(IEnumerable<TrackInfo> tracks)
             {
                 mConnector.mBIsNoTracksToSync = true;
 
                 foreach (TrackInfo curTrack in tracks)
+                {
                     if (!await DownloadTrack(curTrack))
-                        return;
+                    {
+                        Debug.WriteLine("Failed download track: {0}", curTrack.trackInfoForDisplay);
+                        continue;
+                    }
+                    else
+                    {
+                        mConnector.OnTrackSynchronized(curTrack);
+                    }
+                }
 
                 if (mConnector.mBIsNoTracksToSync && mConnector.NoTracksToSyncronization != null)
                     mConnector.NoTracksToSyncronization.BeginInvoke(null, null);
-                    
             }
 
             private async Task<bool> DownloadTrack(TrackInfo track)
             {
                 if (track.trackURI == null
-                    || mConnector.mConfig.selectedDevices == null
                     || mConnector.mConfig.musicLibraryFolder == null)
-                    throw new InvalidOperationException("Destination folders or musicLibraryFolder or track URI == null");
+                    throw new InvalidOperationException("MusicLibraryFolder or track URI == null");
 
                 try
                 {
@@ -74,14 +82,20 @@ namespace PlayerExtension.ExtensionModel
                 if (downloadedFile == null)
                     return false;
 
+                if (mConnector.mConfig.IsDevicesSelected)
+                    return await CopyFileToDevice(downloadedFile);
+
+                mConnector.mBIsNoTracksToSync = false;
+                return true;
+            }
+
+            private async Task<bool> CopyFileToDevice(StorageFile downloadedFile)
+            {
                 foreach (DeviceInfo curDevice in mConnector.mConfig.selectedDevices)
                 {
                     try
                     {
                         StorageFile result = await downloadedFile.CopyAsync(curDevice.deviceFolder, downloadedFile.Name, NameCollisionOption.FailIfExists);
-                        if (mConnector.TrackSynchronized != null)
-                            mConnector.TrackSynchronized.BeginInvoke(new TrackSynchronizedEvent(track.trackInfoForDisplay), null, null);
-                        mConnector.mBIsNoTracksToSync = false;
                     }
                     catch (Exception)
                     { }
@@ -140,9 +154,15 @@ namespace PlayerExtension.ExtensionModel
             return result;
         }
 
-        public async Task SendTracksToDevices(List<TrackInfo> tracks)
+        public async Task SendTracksToDevices(IEnumerable<TrackInfo> tracks)
         {
             await mDownloader.DownloadTracks(tracks);
+        }
+
+        private void OnTrackSynchronized(TrackInfo track)
+        {
+            if (TrackSynchronized != null)
+                TrackSynchronized.BeginInvoke(new TrackSynchronizedEvent(track.trackInfoForDisplay), null, null);
         }
     }
 }
