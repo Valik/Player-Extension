@@ -23,7 +23,7 @@ namespace PlayerExtension
         private PlayerExtensionPage mMainPage;
         private ModelController mModel;
         private bool mBIsRecoveredConnectorConfig = false;
-        private bool mBIsSynchronized = false;
+        private bool mBInSinchronization = false;
         private bool mBIsModelInit = false;
 
         private ResourceLoader mErrorLoader = new ResourceLoader("Errors");
@@ -87,7 +87,7 @@ namespace PlayerExtension
             if(!mBIsRecoveredConnectorConfig)
                 await TryToRecoverConnectorConfig();
 
-            if(!mBIsSynchronized && mBIsRecoveredConnectorConfig)
+            if(!mBInSinchronization && mBIsRecoveredConnectorConfig)
                 await RunSynchronization();
         }
 
@@ -321,8 +321,8 @@ namespace PlayerExtension
 
         private async Task RunSynchronization()
         {
-            mBIsSynchronized = true;
-            while (mBIsSynchronized)
+            mBInSinchronization = true;
+            while (mBInSinchronization)
             {
                 await mModel.Synchronize();
                 await SyncDelay();
@@ -334,7 +334,7 @@ namespace PlayerExtension
             int numberOfDelays = (int)(mSyncDelayInSec / mDelay);
             for (int curDelay = 0; curDelay < numberOfDelays; curDelay++)
             {
-                if (!mBIsSynchronized)
+                if (!mBInSinchronization)
                     return;
                 await Task.Delay(TimeSpan.FromSeconds(mDelay));
             }
@@ -342,7 +342,7 @@ namespace PlayerExtension
 
         private void StopSynchronization()
         {
-            mBIsSynchronized = false;
+            mBInSinchronization = false;
         }
 
         private void OnLastFMConfigChanged(LastFMConfig config)
@@ -369,28 +369,34 @@ namespace PlayerExtension
 
         private async void OnTrackComplite(TrackSynchronizedEvent e)
         {
-            await mMainPage.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            if (mBInSinchronization)
             {
-                mMainPage.DisplaySynchronizedTrack(e.trackName);
-            });
+                await mMainPage.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    mMainPage.DisplaySynchronizedTrack(e.trackName);
+                });
+            }
         }
 
         private async void OnNoTracksToSync()
         {
-            await mMainPage.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            if (mBInSinchronization)
             {
-                mMainPage.DisplayNoTracksToSync();
-            });
+                await mMainPage.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    mMainPage.DisplayNoTracksToSync();
+                });
+            }
         }
 
         private async void OnBadNick(BadUserNickEvent e)
         {
             StopSynchronization();
             await mMainPage.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
-                {
-                    await mMainPage.ShowMessage(mErrorLoader.GetString("extBadLastNick"));
-                    GoToPage(typeof(LastFMPage));
-                });
+            {
+                await mMainPage.ShowMessage(mErrorLoader.GetString("extBadLastNick"));
+                GoToPage(typeof(LastFMPage));
+            });
         }
 
         private async void OnBadToken(BadAccessTokenEvent e)

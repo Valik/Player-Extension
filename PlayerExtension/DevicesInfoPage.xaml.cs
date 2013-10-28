@@ -100,13 +100,13 @@ namespace PlayerExtension
             mLibrary = ExtConfig.playerConnectorConfig.musicLibraryFolder;
             libraryPathBox.Visibility = Windows.UI.Xaml.Visibility.Visible;
             pathTextBox.Text = mLibrary.Path;
+            libraryButton.Background = new SolidColorBrush(Colors.BlueViolet);
 
             if (!ExtConfig.playerConnectorConfig.IsDevicesSelected)
                 return;
 
             mDevInfo = ExtConfig.playerConnectorConfig.selectedDevices;
 
-            libraryButton.Background = new SolidColorBrush(Colors.BlueViolet);
             String deviceName = ExtConfig.playerConnectorConfig.selectedDevices.First().deviceName;
 
             var items = devicesList.Items;

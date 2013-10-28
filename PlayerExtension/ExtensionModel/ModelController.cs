@@ -50,11 +50,13 @@ namespace PlayerExtension.ExtensionModel
         public void UpdateLastFMConfig(LastFMConfig lastFMConfig)
         {
             mLastFMSeacher.UpdateConfig(lastFMConfig);
+            mDownloadingTracks.Clear();
         }
 
         public void UpdatePlayerConnectorConfig(PlayerConnectorConfig connectorConfig)
         {
             mPlayerConnector.UpdateConfig(connectorConfig);
+            mDownloadingTracks.Clear();
         }
 
         public static async Task<List<String>> GetAvailableDevices()

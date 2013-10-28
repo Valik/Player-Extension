@@ -128,14 +128,6 @@ namespace PlayerExtension
         {
             if (pageState == null)
                 return;
-            /*
-            foreach (var curStateItem in pageState)
-            {
-                if (curStateItem.Key == "syncState")
-                    ;//RecoverSyncState((int)curStateItem.Value);
-            
-            }*/
-
         }
 
         private void RecoverSyncState(int syncState)
@@ -159,7 +151,6 @@ namespace PlayerExtension
             }
         }
 
-
         /// <summary>
         /// Сохраняет состояние, связанное с данной страницей, в случае приостановки приложения или
         /// удаления страницы из кэша навигации. Значения должны соответствовать требованиям сериализации
@@ -170,34 +161,28 @@ namespace PlayerExtension
         {
             if (pageState == null)
                 return;
-            /*
-            pageState["syncState"] = (int)mSyncState;
-            for (int i = 0; i < mTracks.Count; i++)
-            {
-                pageState["track" + i] = mTracks[i].trackName;
-            }*/
         }
 
         private void backButton_Click(object sender, RoutedEventArgs e)
         {
+            OnSyncStopped();
+            SetStopedStyleForInfoBox();
+
             if (this.Frame != null)
                 this.Frame.Navigate(typeof(DevicesInfoPage));
         }
 
         private void StartButton_Click(object sender, RoutedEventArgs e)
         {
-            if (SyncStarted != null)
-                SyncStarted.BeginInvoke(new StartSyncEvent(), null, null);
+            OnSyncStarted();
 
             mTracks.Insert(0, new TrackName() { trackName = mResLoader.GetString("messageLoading") });
             SetStartedStyleForInfoBox();
-
         }
 
         private void StopButton_Click(object sender, RoutedEventArgs e)
         {
-            if (SyncStoped != null)
-                SyncStoped.BeginInvoke(new StopSyncEvent(), null, null);
+            OnSyncStopped();
 
             SetStopedStyleForInfoBox();
         }
@@ -311,6 +296,18 @@ namespace PlayerExtension
             {
                 
             }
+        }
+
+        private static void OnSyncStarted()
+        {
+            if (SyncStarted != null)
+                SyncStarted.BeginInvoke(new StartSyncEvent(), null, null);
+        }
+
+        private static void OnSyncStopped()
+        {
+            if (SyncStoped != null)
+                SyncStoped.BeginInvoke(new StopSyncEvent(), null, null);
         }
     }
 

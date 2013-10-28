@@ -55,6 +55,7 @@ namespace PlayerExtension.ExtensionModel
                     else
                     {
                         mConnector.OnTrackSynchronized(curTrack);
+                        mConnector.mBIsNoTracksToSync = false;
                     }
                 }
 
@@ -85,7 +86,6 @@ namespace PlayerExtension.ExtensionModel
                 if (mConnector.mConfig.IsDevicesSelected)
                     return await CopyFileToDevice(downloadedFile);
 
-                mConnector.mBIsNoTracksToSync = false;
                 return true;
             }
 
