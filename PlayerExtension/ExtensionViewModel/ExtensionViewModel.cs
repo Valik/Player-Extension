@@ -140,6 +140,7 @@ namespace PlayerExtension
                     devicesInfo.Add(curDevice.deviceName, curDevice.deviceFolder.Name);
                 }
                 localContainer.Values["devicesInfo"] = devicesInfo;
+                mBIsRecoveredConnectorConfig = true;
             }
         }
 

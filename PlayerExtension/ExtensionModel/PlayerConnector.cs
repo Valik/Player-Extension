@@ -45,48 +45,79 @@ namespace PlayerExtension.ExtensionModel
             {
                 mConnector.mBIsNoTracksToSync = true;
 
+                var taskList = new List<Task<DownloadingResult>>();
+
                 foreach (TrackInfo curTrack in tracks)
                 {
-                    if (!await DownloadTrack(curTrack))
+                    taskList.Add(DownloadTrack(curTrack));
+                }
+
+                while (taskList.Count > 0)
+                {
+                    Task<DownloadingResult> complitedTask = await Task.WhenAny(taskList);
+
+                    var downloadingResult = await complitedTask;
+                    if (!downloadingResult.IsComplite)
                     {
-                        Debug.WriteLine("Failed download track: {0}", curTrack.trackInfoForDisplay);
-                        continue;
+                        Debug.WriteLine("Failed download track: {0}", downloadingResult.TrackInfo.trackInfoForDisplay);
                     }
                     else
                     {
-                        mConnector.OnTrackSynchronized(curTrack);
+                        mConnector.OnTrackSynchronized(downloadingResult.TrackInfo);
                         mConnector.mBIsNoTracksToSync = false;
                     }
+
+                    taskList.Remove(complitedTask);
                 }
 
                 if (mConnector.mBIsNoTracksToSync && mConnector.NoTracksToSyncronization != null)
                     mConnector.NoTracksToSyncronization.BeginInvoke(null, null);
             }
 
-            private async Task<bool> DownloadTrack(TrackInfo track)
+            private Task<DownloadingResult> DownloadTrack(TrackInfo track)
             {
-                if (track.trackURI == null
-                    || mConnector.mConfig.musicLibraryFolder == null)
-                    throw new InvalidOperationException("MusicLibraryFolder or track URI == null");
-
-                try
+                return Task.Run(async () =>
                 {
-                    StorageFile destinationFile = await mConnector.mConfig.musicLibraryFolder.CreateFileAsync(track.trackInfoForDownloader, CreationCollisionOption.FailIfExists);
-                    BackgroundDownloader downloader = new BackgroundDownloader();
-                    DownloadOperation download = downloader.CreateDownload(track.trackURI, destinationFile);
-                    await download.StartAsync();
-                }
-                catch (Exception)
-                { }
+                    if (track.trackURI == null
+                        || mConnector.mConfig.musicLibraryFolder == null)
+                        throw new InvalidOperationException("MusicLibraryFolder or track URI == null");
 
-                StorageFile downloadedFile = await GetDownloadedFile(track);
-                if (downloadedFile == null)
-                    return false;
+                    try
+                    {
+                        StorageFile destinationFile = await mConnector.mConfig.musicLibraryFolder.CreateFileAsync(track.trackInfoForDownloader, CreationCollisionOption.FailIfExists);
+                        BackgroundDownloader downloader = new BackgroundDownloader();
+                        DownloadOperation download = downloader.CreateDownload(track.trackURI, destinationFile);
+                        await download.StartAsync();
+                    }
+                    catch (Exception)
+                    { }
 
-                if (mConnector.mConfig.IsDevicesSelected)
-                    return await CopyFileToDevice(downloadedFile);
+                    StorageFile downloadedFile = await GetDownloadedFile(track);
+                    if (downloadedFile == null)
+                    {
+                        return new DownloadingResult
+                        {
+                            TrackInfo = track,
+                            IsComplite = false
+                        };
+                    }
 
-                return true;
+                    if (mConnector.mConfig.IsDevicesSelected)
+                    {
+                        var isCopied = await CopyFileToDevice(downloadedFile);
+                        return new DownloadingResult
+                        {
+                            TrackInfo = track,
+                            IsComplite = isCopied
+                        };
+                    }
+
+                    return new DownloadingResult
+                    {
+                        TrackInfo = track,
+                        IsComplite = true
+                    };
+                });
             }
 
             private async Task<bool> CopyFileToDevice(StorageFile downloadedFile)
