@@ -26,6 +26,12 @@ namespace PlayerExtension
         private bool mBInSinchronization = false;
         private bool mBIsModelInit = false;
 
+        private const string LastConfigName = "lastConfig";
+        private const string VkConfigName = "vkConfig";
+        private const string MusicLibraryConfigName = "musicLibraryConfig";
+        private const string DevicesInfoConfigName = "devicesInfo";
+
+
         private ResourceLoader mErrorLoader = new ResourceLoader("Errors");
 
         private double mSyncDelayInSec = 10;
@@ -105,32 +111,31 @@ namespace PlayerExtension
 
         private void SaveLastConfig(LastFMConfig config)
         {
-            ApplicationDataContainer localContainer = ApplicationData.Current.LocalSettings;
             ApplicationDataCompositeValue savingAppConfig = new ApplicationDataCompositeValue();
 
             savingAppConfig.Add("lastUserName", config.userName);
             savingAppConfig.Add("lastSearchType", (int)config.maskSearchType);
             savingAppConfig.Add("lastLimit", config.limit);
 
-            localContainer.Values["lastConfig"] = savingAppConfig;
+            SaveConfig(LastConfigName, savingAppConfig);
         }
 
         private void SaveVKConfig(VKConfig config)
         {
-            ApplicationDataContainer localContainer = ApplicationData.Current.LocalSettings;
             ApplicationDataCompositeValue savingAppConfig = new ApplicationDataCompositeValue();
 
             savingAppConfig.Add("vkAccessToken", config.ACCESS_TOKEN);
-            localContainer.Values["vkConfig"] = savingAppConfig;
+
+            SaveConfig(VkConfigName, savingAppConfig);
         }
 
         private void SaveConnectorConfig(PlayerConnectorConfig config)
         {
-            ApplicationDataContainer localContainer = ApplicationData.Current.LocalSettings;
             ApplicationDataCompositeValue savingAppConfig = new ApplicationDataCompositeValue();
 
             savingAppConfig.Add("musicLibraryFolder", config.musicLibraryFolder.Path);
-            localContainer.Values["musicLibraryConfig"] = savingAppConfig;
+
+            SaveConfig(MusicLibraryConfigName, savingAppConfig);
 
             if (config.IsDevicesSelected)
             {
@@ -139,50 +144,20 @@ namespace PlayerExtension
                 {
                     devicesInfo.Add(curDevice.deviceName, curDevice.deviceFolder.Name);
                 }
-                localContainer.Values["devicesInfo"] = devicesInfo;
+
+                SaveConfig(DevicesInfoConfigName, devicesInfo);
             }
         }
 
-        private async Task<bool> TryToRecoverSavingConfig()
+        private void SaveConfig(string configName, ApplicationDataCompositeValue config)
         {
-            ApplicationDataContainer localContainer = ApplicationData.Current.LocalSettings;
-            if (localContainer.Values["lastConfig"] == null ||
-                localContainer.Values["vkConfig"] == null ||
-                localContainer.Values["musicLibraryConfig"] == null ||
-                localContainer.Values["devicesInfo"] == null)
-                return false;
+            ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
-            ApplicationDataCompositeValue lastConfigCont = (ApplicationDataCompositeValue)localContainer.Values["lastConfig"];
-            ApplicationDataCompositeValue vkConfigCont = (ApplicationDataCompositeValue)localContainer.Values["vkConfig"];
-            ApplicationDataCompositeValue musicLibraryConfigCont = (ApplicationDataCompositeValue)localContainer.Values["musicLibraryConfig"];
-            ApplicationDataCompositeValue devicesInfo = (ApplicationDataCompositeValue)localContainer.Values["devicesInfo"];
-
-            LastFMConfig lastFMConfig = new LastFMConfig((String)lastConfigCont["lastUserName"],
-                                                    (LastFMSearchType)((int)lastConfigCont["lastSearchType"]),
-                                                    (int)lastConfigCont["lastLimit"]);
-            VKConfig vkConfig = new VKConfig((String)vkConfigCont["vkAccessToken"]);
-
-            List<DeviceInfo> devices = await GetDevicesInfo(devicesInfo);
-            if (devices == null)
-                return false;//TODO: Оповестить пользователя, устройства не доступны
-
-            StorageFolder musicLibraryFolder = null;
-            try
+            var container = localSettings.CreateContainer(configName, Windows.Storage.ApplicationDataCreateDisposition.Always);
+            if (localSettings.Containers.ContainsKey(configName))
             {
-                musicLibraryFolder = await StorageFolder.GetFolderFromPathAsync((String)musicLibraryConfigCont["musicLibraryFolder"]);
+                localSettings.Values[configName] = config;
             }
-            catch (Exception)
-            {
-                //TODO: Оповестить пользователя, music library папка не доступна
-                return false;
-            }
-
-            PlayerConnectorConfig connectorConfig = new PlayerConnectorConfig(devices, musicLibraryFolder);
-
-            ExtConfig.lastFMConfig = lastFMConfig;
-            ExtConfig.vkConfig = vkConfig;
-            ExtConfig.playerConnectorConfig = connectorConfig;
-            return true;
         }
 
         private bool TryToRecoverLastConfig()
