@@ -13,7 +13,7 @@
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{BC8A1FFA-BEE3-4634-8014-F334798102B3};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <PackageCertificateKeyFile>PlayerExtension_StoreKey.pfx</PackageCertificateKeyFile>
-    <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+    <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
     <PackageCertificateThumbprint>DED3609A0187CD9A808B0FE5DC7759E2C6B217D7</PackageCertificateThumbprint>
     <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
   </PropertyGroup>
@@ -104,15 +104,15 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <!-- A reference to the entire .Net Framework and Windows SDK are automatically included -->
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="Common\BindableBase.cs" />
     <Compile Include="Common\BooleanNegationConverter.cs" />
     <Compile Include="Common\BooleanToVisibilityConverter.cs" />
+    <Compile Include="Common\Config\ConfigManager.cs" />
+    <Compile Include="Common\Config\StorageDeviceConfig.cs" />
+    <Compile Include="Common\Config\StoragesConfig.cs" />
     <Compile Include="Common\LayoutAwarePage.cs" />
     <Compile Include="Common\RichTextColumns.cs" />
     <Compile Include="Common\SuspensionManager.cs" />
@@ -131,15 +131,14 @@
     <Compile Include="ExtensionModel\TroubleWithDeviceEvent.cs" />
     <Compile Include="ExtensionModel\TroubleWithMusicLibraryFolderEvent.cs" />
     <Compile Include="ExtensionModel\VKSearcher.cs" />
-    <Compile Include="ExtensionViewModel\ExtConfig.cs" />
-    <Compile Include="ExtensionViewModel\ExtensionConfig.cs" />
+    <Compile Include="Common\Config\ExtConfig.cs" />
     <Compile Include="ExtensionViewModel\ExtensionViewModel.cs" />
     <Compile Include="ExtensionViewModel\FirstPage.cs" />
-    <Compile Include="ExtensionViewModel\LastFMConfig.cs" />
-    <Compile Include="ExtensionViewModel\PlayerConnectorConfig.cs" />
+    <Compile Include="Common\Config\LastFMConfig.cs" />
+    <Compile Include="Common\Config\PlayerConnectorConfig.cs" />
     <Compile Include="ExtensionViewModel\SettingPaneHelper.cs" />
-    <Compile Include="ExtensionViewModel\VKConfig.cs" />
-    <Compile Include="ExtensionViewModel\VKScopeList.cs" />
+    <Compile Include="Common\Config\VKConfig.cs" />
+    <Compile Include="Common\Config\VKScopeList.cs" />
     <Compile Include="LastFMPage.xaml.cs">
       <DependentUpon>LastFMPage.xaml</DependentUpon>
     </Compile>
@@ -160,6 +159,7 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
+    <None Include="packages.config" />
     <None Include="PlayerExtension_StoreKey.pfx" />
     <None Include="PlayerExtension_TemporaryKey.pfx" />
     <PRIResource Include="strings\en-US\Errors.resw" />
@@ -224,6 +224,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.5.0.8\lib\netcore45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '11.0' ">
     <VisualStudioVersion>11.0</VisualStudioVersion>

@@ -9,6 +9,7 @@ using Windows.Foundation;
 using Windows.Storage;
 using Windows.Networking.BackgroundTransfer;
 using System.Diagnostics;
+using PlayerExtension.Common;
 
 namespace PlayerExtension.ExtensionModel
 {

@@ -1,11 +1,12 @@
-﻿using System;
+﻿using PlayerExtension.Common.Config;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Storage;
 
-namespace PlayerExtension
+namespace PlayerExtension.Common
 {
     public class PlayerConnectorConfig
     {
@@ -41,6 +42,24 @@ namespace PlayerExtension
         public bool IsDevicesSelected
         {
             get { return mIsDevicesSelected; }
+        }
+
+        public StoragesConfig storagesConfig
+        {
+            get
+            {
+                var config = new StoragesConfig();
+                config.musicLibraryStorage = mMusicLibraryFolder.Path;
+                config.deviceStorages = mSelectedDevices.Select(
+                    d => new StorageDeviceConfig
+                    {
+                        name = d.deviceName,
+                        deviceFolderName = d.deviceFolder.Name,
+                        deviceFolderPath = d.deviceFolder.Path
+                    })
+                    .ToList();
+                return config;
+            }
         }
     }
 

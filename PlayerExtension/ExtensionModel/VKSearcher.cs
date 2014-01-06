@@ -7,6 +7,7 @@ using System.Xml;
 using System.Net;
 using System.IO;
 using System.Xml.Linq;
+using PlayerExtension.Common;
 
 namespace PlayerExtension.ExtensionModel
 {

@@ -1,25 +1,31 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PlayerExtension
+namespace PlayerExtension.Common
 {
+    [JsonObject(MemberSerialization.OptIn)]
     public class VKConfig
     {
         public string mAccessToken;
+
+        public VKConfig()
+        { }
 
         public VKConfig(string accessToken)
         { mAccessToken = accessToken; }
 
         public static String API_ID
         { get { return "3432583"; } }
-
+        
+        [JsonProperty]
         public String ACCESS_TOKEN
         {
             get { return mAccessToken; }
-            //internal set { mAccessToken = value; }
+            set { mAccessToken = value; }
         }
 
         public static string VK_ADDRESS

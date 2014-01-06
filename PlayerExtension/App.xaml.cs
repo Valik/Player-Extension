@@ -81,7 +81,7 @@ namespace PlayerExtension
                 // Если стек навигации не восстанавливается для перехода к первой странице,
                 // настройка новой страницы путем передачи необходимой информации в качестве параметра
                 // навигации
-                FirstPage firstPage = mViewModel.GetFirstPage();
+                FirstPage firstPage = await mViewModel.GetFirstPage();
 
                 if (!rootFrame.Navigate(firstPage.page))
                 {

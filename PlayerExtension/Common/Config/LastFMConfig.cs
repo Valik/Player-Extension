@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PlayerExtension
+namespace PlayerExtension.Common
 {
     [Flags]
     public enum LastFMSearchType
@@ -13,11 +14,15 @@ namespace PlayerExtension
         LAST_LISTENED_TRACKS = 4
     }
 
+    [JsonObject(MemberSerialization.OptIn)]
     public class LastFMConfig
     {
         private String mUserName;
         private LastFMSearchType mMaskSearchType;
         private int mLimit;
+
+        public LastFMConfig()
+        { }
 
         public LastFMConfig(String userName, LastFMSearchType maskSearchType, int limit)
         { 
@@ -34,17 +39,29 @@ namespace PlayerExtension
         /// <summary>
         /// Serialized last username
         /// </summary>
-        public String userName
-        { get { return mUserName; } }
+        [JsonProperty]
+        public String userName 
+        {
+            get { return mUserName; }
+            set { mUserName = value; }
+        }
         /// <summary>
         /// Serialized last search type
         /// </summary>
+        [JsonProperty]
         public LastFMSearchType maskSearchType
-        { get { return mMaskSearchType; } }
+        {
+            get { return mMaskSearchType; }
+            set { mMaskSearchType = value; }
+        }
         /// <summary>
         /// Serialized last limit tracks to search
         /// </summary>
+        [JsonProperty]
         public int limit
-        { get { return mLimit; } }
+        {
+            get { return mLimit; }
+            set { mLimit = value; }
+        }
     }
 }
