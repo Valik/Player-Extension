@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest">
-  <Identity Name="18072Valik.PlayerExtension" Publisher="CN=F4A1800D-F5A2-41A0-A693-B16DAD6C762B" Version="1.0.0.9" />
+  <Identity Name="18072Valik.PlayerExtension" Publisher="CN=F4A1800D-F5A2-41A0-A693-B16DAD6C762B" Version="1.0.0.13" />
   <Properties>
     <DisplayName>Player Extension</DisplayName>
     <PublisherDisplayName>Valik</PublisherDisplayName>

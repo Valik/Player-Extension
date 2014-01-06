@@ -15,6 +15,8 @@ using Windows.UI.Core;
 using Windows.UI.Xaml.Navigation;
 using System.Text.RegularExpressions;
 using Windows.ApplicationModel.Resources;
+using PlayerExtension.Common;
+using PlayerExtension.Common.Config;
 
 namespace PlayerExtension
 {
@@ -25,6 +27,12 @@ namespace PlayerExtension
         private bool mBIsRecoveredConnectorConfig = false;
         private bool mBInSinchronization = false;
         private bool mBIsModelInit = false;
+
+        private const string LastConfigName = "lastConfig";
+        private const string VkConfigName = "vkConfig";
+        private const string MusicLibraryConfigName = "musicLibraryConfig";
+        private const string DevicesInfoConfigName = "devicesInfo";
+
 
         private ResourceLoader mErrorLoader = new ResourceLoader("Errors");
 
@@ -38,10 +46,10 @@ namespace PlayerExtension
             PlayerExtensionPage.SyncStoped += OnSyncStoped;
         }
 
-        public FirstPage GetFirstPage()
+        public async Task<FirstPage> GetFirstPage()
         {
-            bool lastRes = TryToRecoverLastConfig();
-            bool vkRes = TryToRecoverVKConfig();
+            bool lastRes = await TryToRecoverLastConfig();
+            bool vkRes = await TryToRecoverVKConfig();
 
             SubscribeConfigEvents();
             if(!lastRes)
@@ -103,132 +111,85 @@ namespace PlayerExtension
             SaveConnectorConfig(ExtConfig.playerConnectorConfig);
         }
 
-        private void SaveLastConfig(LastFMConfig config)
+        private async void SaveLastConfig(LastFMConfig config)
         {
-            ApplicationDataContainer localContainer = ApplicationData.Current.LocalSettings;
-            ApplicationDataCompositeValue savingAppConfig = new ApplicationDataCompositeValue();
-
-            savingAppConfig.Add("lastUserName", config.userName);
-            savingAppConfig.Add("lastSearchType", (int)config.maskSearchType);
-            savingAppConfig.Add("lastLimit", config.limit);
-
-            localContainer.Values["lastConfig"] = savingAppConfig;
+            var success = await ConfigManager.TrySaveLastConfig(config);
         }
 
-        private void SaveVKConfig(VKConfig config)
+        private async void SaveVKConfig(VKConfig config)
         {
-            ApplicationDataContainer localContainer = ApplicationData.Current.LocalSettings;
-            ApplicationDataCompositeValue savingAppConfig = new ApplicationDataCompositeValue();
-
-            savingAppConfig.Add("vkAccessToken", config.ACCESS_TOKEN);
-            localContainer.Values["vkConfig"] = savingAppConfig;
+            var success = await ConfigManager.TrySaveVkConfig(config);
         }
 
-        private void SaveConnectorConfig(PlayerConnectorConfig config)
+        private async void SaveConnectorConfig(PlayerConnectorConfig config)
         {
-            ApplicationDataContainer localContainer = ApplicationData.Current.LocalSettings;
-            ApplicationDataCompositeValue savingAppConfig = new ApplicationDataCompositeValue();
+            var storagesConfig = config.storagesConfig;
+            var success = await ConfigManager.TrySaveStoragesConfig(storagesConfig);
 
-            savingAppConfig.Add("musicLibraryFolder", config.musicLibraryFolder.Path);
-            localContainer.Values["musicLibraryConfig"] = savingAppConfig;
+            //ApplicationDataCompositeValue savingAppConfig = new ApplicationDataCompositeValue();
 
-            if (config.IsDevicesSelected)
-            {
-                ApplicationDataCompositeValue devicesInfo = new ApplicationDataCompositeValue();
-                foreach (var curDevice in config.selectedDevices)
-                {
-                    devicesInfo.Add(curDevice.deviceName, curDevice.deviceFolder.Name);
-                }
-                localContainer.Values["devicesInfo"] = devicesInfo;
-            }
+            //savingAppConfig.Add("musicLibraryFolder", config.musicLibraryFolder.Path);
+
+            //SaveConfig(MusicLibraryConfigName, savingAppConfig);
+
+            //if (config.IsDevicesSelected)
+            //{
+            //    ApplicationDataCompositeValue devicesInfo = new ApplicationDataCompositeValue();
+            //    foreach (var curDevice in config.selectedDevices)
+            //    {
+            //        devicesInfo.Add(curDevice.deviceName, curDevice.deviceFolder.Name);
+            //    }
+
+            //    SaveConfig(DevicesInfoConfigName, devicesInfo);
+            //}
         }
 
-        private async Task<bool> TryToRecoverSavingConfig()
+        //private void SaveConfig(string configName, ApplicationDataCompositeValue config)
+        //{
+        //    ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
+
+        //    var container = localSettings.CreateContainer(configName, Windows.Storage.ApplicationDataCreateDisposition.Always);
+        //    if (localSettings.Containers.ContainsKey(configName))
+        //    {
+        //        localSettings.Values[configName] = config;
+        //    }
+        //}
+
+        private async Task<bool> TryToRecoverLastConfig()
         {
-            ApplicationDataContainer localContainer = ApplicationData.Current.LocalSettings;
-            if (localContainer.Values["lastConfig"] == null ||
-                localContainer.Values["vkConfig"] == null ||
-                localContainer.Values["musicLibraryConfig"] == null ||
-                localContainer.Values["devicesInfo"] == null)
+            var lastFMConfig = await ConfigManager.GetLastFMConfig();
+            if (lastFMConfig == null)
                 return false;
-
-            ApplicationDataCompositeValue lastConfigCont = (ApplicationDataCompositeValue)localContainer.Values["lastConfig"];
-            ApplicationDataCompositeValue vkConfigCont = (ApplicationDataCompositeValue)localContainer.Values["vkConfig"];
-            ApplicationDataCompositeValue musicLibraryConfigCont = (ApplicationDataCompositeValue)localContainer.Values["musicLibraryConfig"];
-            ApplicationDataCompositeValue devicesInfo = (ApplicationDataCompositeValue)localContainer.Values["devicesInfo"];
-
-            LastFMConfig lastFMConfig = new LastFMConfig((String)lastConfigCont["lastUserName"],
-                                                    (LastFMSearchType)((int)lastConfigCont["lastSearchType"]),
-                                                    (int)lastConfigCont["lastLimit"]);
-            VKConfig vkConfig = new VKConfig((String)vkConfigCont["vkAccessToken"]);
-
-            List<DeviceInfo> devices = await GetDevicesInfo(devicesInfo);
-            if (devices == null)
-                return false;//TODO: Оповестить пользователя, устройства не доступны
-
-            StorageFolder musicLibraryFolder = null;
-            try
-            {
-                musicLibraryFolder = await StorageFolder.GetFolderFromPathAsync((String)musicLibraryConfigCont["musicLibraryFolder"]);
-            }
-            catch (Exception)
-            {
-                //TODO: Оповестить пользователя, music library папка не доступна
-                return false;
-            }
-
-            PlayerConnectorConfig connectorConfig = new PlayerConnectorConfig(devices, musicLibraryFolder);
-
-            ExtConfig.lastFMConfig = lastFMConfig;
-            ExtConfig.vkConfig = vkConfig;
-            ExtConfig.playerConnectorConfig = connectorConfig;
-            return true;
-        }
-
-        private bool TryToRecoverLastConfig()
-        {
-            ApplicationDataContainer localContainer = ApplicationData.Current.LocalSettings;
-            if (!localContainer.Values.ContainsKey("lastConfig"))
-                return false;
-
-            ApplicationDataCompositeValue lastConfigCont = localContainer.Values["lastConfig"] as ApplicationDataCompositeValue;
-
-            LastFMConfig lastFMConfig = new LastFMConfig((String)lastConfigCont["lastUserName"],
-                                                    (LastFMSearchType)((int)lastConfigCont["lastSearchType"]),
-                                                    (int)lastConfigCont["lastLimit"]);
 
             ExtConfig.lastFMConfig = lastFMConfig;
             return true;
         }
 
-        private bool TryToRecoverVKConfig()
+        private async Task<bool> TryToRecoverVKConfig()
         {
-            ApplicationDataContainer localContainer = ApplicationData.Current.LocalSettings;
-            if (localContainer.Values["vkConfig"] == null)
+            var vkConfig = await ConfigManager.GetVkConfig();
+            if (vkConfig == null)
                 return false;
 
-            ApplicationDataCompositeValue vkConfigCont = (ApplicationDataCompositeValue)localContainer.Values["vkConfig"];
-            VKConfig vkConfig = new VKConfig((String)vkConfigCont["vkAccessToken"]);
             ExtConfig.vkConfig = vkConfig;
             return true;
         }
 
         private async Task TryToRecoverConnectorConfig()
         {
-            ApplicationDataContainer localContainer = ApplicationData.Current.LocalSettings;
-            if (!localContainer.Values.ContainsKey("musicLibraryConfig") &&
-                !localContainer.Values.ContainsKey("devicesInfo"))
+            StoragesConfig storagesConfig = await ConfigManager.GetStoragesConfig();
+
+            if (storagesConfig == null)
             {
                 mBIsRecoveredConnectorConfig = false;
                 TroubleWithRecoveringConnectorConfig();
                 return;
             }
 
-            ApplicationDataCompositeValue musicLibraryConfigCont = localContainer.Values["musicLibraryConfig"] as ApplicationDataCompositeValue;
             StorageFolder musicLibraryFolder = null;
             try
             {
-                musicLibraryFolder = await StorageFolder.GetFolderFromPathAsync(musicLibraryConfigCont["musicLibraryFolder"] as string);
+                musicLibraryFolder = await StorageFolder.GetFolderFromPathAsync(storagesConfig.musicLibraryStorage);
             }
             catch (Exception)
             {
@@ -237,11 +198,10 @@ namespace PlayerExtension
                 return;
             }
 
-            ApplicationDataCompositeValue devicesInfo = localContainer.Values["devicesInfo"] as ApplicationDataCompositeValue;
             List<DeviceInfo> devices = null;
-            if (devicesInfo != null)
+            if (storagesConfig.deviceStorages != null)
             {
-                devices = await GetDevicesInfo(devicesInfo);
+                devices = await GetDevicesInfo(storagesConfig.deviceStorages);
                 if (devices == null)
                 {
                     mBIsRecoveredConnectorConfig = false;
@@ -258,25 +218,22 @@ namespace PlayerExtension
             mBIsRecoveredConnectorConfig = true;
         }
 
-        private async Task<List<DeviceInfo>> GetDevicesInfo(ApplicationDataCompositeValue devicesInfo)
+        private async Task<List<DeviceInfo>> GetDevicesInfo(List<StorageDeviceConfig> deviceStorages)
         {
             List<DeviceInfo> devices = new List<DeviceInfo>();
 
-            foreach (var curDevice in devicesInfo)
+            foreach (var curDevice in deviceStorages)
             {
-                String deviceName = curDevice.Key;
-                String folderName = (String)curDevice.Value;
-
                 try
                 {
-                    StorageFolder deviceFolder = await GetDeviceFolder(deviceName, folderName);
+                    StorageFolder deviceFolder = await GetDeviceFolder(curDevice);
                     if (deviceFolder == null)
                     {
                         //TODO: Оповестить пользователя, устройства не доступны
                         return null;
                     }
 
-                    devices.Add(new DeviceInfo(curDevice.Key, deviceFolder));
+                    devices.Add(new DeviceInfo(curDevice.name, deviceFolder));
                 }
                 catch (Exception)
                 {
@@ -287,32 +244,46 @@ namespace PlayerExtension
             return devices;
         }
 
-        private async Task<StorageFolder> GetDeviceFolder(String deviceName, String folderName)
+        private async Task<StorageFolder> GetDeviceFolder(StorageDeviceConfig deviceConfig)
         {
             DeviceInformationCollection deviceInfoCollection = await DeviceInformation.FindAllAsync(StorageDevice.GetDeviceSelector());
             if (deviceInfoCollection.Count > 0)
                 foreach (DeviceInformation curDeviceInfo in deviceInfoCollection)
-                    if (curDeviceInfo.Name == deviceName)
+                    if (curDeviceInfo.Name == deviceConfig.name)
                     {
                         StorageFolder devStorage = StorageDevice.FromId(curDeviceInfo.Id);
-                        return await GetDestinationFolder(devStorage, folderName);
+                        return await GetDestinationFolder(devStorage, deviceConfig.deviceFolderName, deviceConfig.deviceFolderPath);
                     }
             return null;
         }
 
-        private async Task<StorageFolder> GetDestinationFolder(StorageFolder devStorage, String folderName)
+        private async Task<StorageFolder> GetDestinationFolder(StorageFolder devStorage, String folderName, String folderPath)
         {
-            if (devStorage.Name == folderName)
+            try
+            {
+                return await StorageFolder.GetFolderFromPathAsync(folderPath);
+            }
+            catch
+            {
+            }
+
+            return await GetFindFolderRecursively(devStorage, folderName, folderPath);
+        }
+
+
+        private async Task<StorageFolder> GetFindFolderRecursively(StorageFolder devStorage, String folderName, String folderPath)
+        {
+            if (devStorage.Name == folderName && devStorage.Path == folderPath)
                 return devStorage;
 
             var subFolders = await devStorage.GetFoldersAsync();
 
             foreach (var curFolder in subFolders)
-                if (curFolder.Name == folderName)
+                if (curFolder.Name == folderName && curFolder.Path == folderPath)
                     return curFolder;
                 else
                 {
-                    var result = await GetDestinationFolder(curFolder, folderName);
+                    var result = await GetFindFolderRecursively(curFolder, folderName, folderPath);
                     if (result != null)
                         return result;
                 }

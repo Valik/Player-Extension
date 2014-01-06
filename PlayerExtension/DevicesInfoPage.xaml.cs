@@ -20,6 +20,7 @@ using Windows.Storage;
 using Windows.UI.Popups;
 using Windows.UI;
 using Windows.ApplicationModel.Resources;
+using PlayerExtension.Common;
 
 // Документацию по шаблону элемента "Основная страница" см. по адресу http://go.microsoft.com/fwlink/?LinkId=234237
 
