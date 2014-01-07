@@ -13,6 +13,8 @@ namespace PlayerExtension.Common.Config
         [JsonProperty]
         public string musicLibraryStorage { get; set; }
         [JsonProperty]
+        public bool deviceSelected  { get; set; }
+        [JsonProperty]
         public List<StorageDeviceConfig> deviceStorages { get; set; }
     }
 }

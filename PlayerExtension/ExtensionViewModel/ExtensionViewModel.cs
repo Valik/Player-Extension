@@ -125,35 +125,7 @@ namespace PlayerExtension
         {
             var storagesConfig = config.storagesConfig;
             var success = await ConfigManager.TrySaveStoragesConfig(storagesConfig);
-
-            //ApplicationDataCompositeValue savingAppConfig = new ApplicationDataCompositeValue();
-
-            //savingAppConfig.Add("musicLibraryFolder", config.musicLibraryFolder.Path);
-
-            //SaveConfig(MusicLibraryConfigName, savingAppConfig);
-
-            //if (config.IsDevicesSelected)
-            //{
-            //    ApplicationDataCompositeValue devicesInfo = new ApplicationDataCompositeValue();
-            //    foreach (var curDevice in config.selectedDevices)
-            //    {
-            //        devicesInfo.Add(curDevice.deviceName, curDevice.deviceFolder.Name);
-            //    }
-
-            //    SaveConfig(DevicesInfoConfigName, devicesInfo);
-            //}
         }
-
-        //private void SaveConfig(string configName, ApplicationDataCompositeValue config)
-        //{
-        //    ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
-
-        //    var container = localSettings.CreateContainer(configName, Windows.Storage.ApplicationDataCreateDisposition.Always);
-        //    if (localSettings.Containers.ContainsKey(configName))
-        //    {
-        //        localSettings.Values[configName] = config;
-        //    }
-        //}
 
         private async Task<bool> TryToRecoverLastConfig()
         {
@@ -199,7 +171,7 @@ namespace PlayerExtension
             }
 
             List<DeviceInfo> devices = null;
-            if (storagesConfig.deviceStorages != null)
+            if (storagesConfig.deviceSelected && storagesConfig.deviceStorages != null)
             {
                 devices = await GetDevicesInfo(storagesConfig.deviceStorages);
                 if (devices == null)

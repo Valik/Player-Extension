@@ -50,7 +50,11 @@ namespace PlayerExtension.Common
             {
                 var config = new StoragesConfig();
                 config.musicLibraryStorage = mMusicLibraryFolder.Path;
-                config.deviceStorages = mSelectedDevices.Select(
+                config.deviceSelected = mIsDevicesSelected;
+
+                if (mIsDevicesSelected && mSelectedDevices != null)
+                {
+                    config.deviceStorages = mSelectedDevices.Select(
                     d => new StorageDeviceConfig
                     {
                         name = d.deviceName,
@@ -58,6 +62,12 @@ namespace PlayerExtension.Common
                         deviceFolderPath = d.deviceFolder.Path
                     })
                     .ToList();
+                }
+                else
+                {
+                    config.deviceStorages = new List<StorageDeviceConfig>();
+                }
+
                 return config;
             }
         }
