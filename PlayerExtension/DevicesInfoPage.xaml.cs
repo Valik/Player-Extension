@@ -21,6 +21,7 @@ using Windows.UI.Popups;
 using Windows.UI;
 using Windows.ApplicationModel.Resources;
 using PlayerExtension.Common;
+using Windows.ApplicationModel.Activation;
 
 // Документацию по шаблону элемента "Основная страница" см. по адресу http://go.microsoft.com/fwlink/?LinkId=234237
 
@@ -256,13 +257,6 @@ namespace PlayerExtension
 
         private async void forwardButton_Click(object sender, RoutedEventArgs e)
         {
-            //if (mDevInfo == null || mDevInfo.Count == 0)
-            //{
-            //    MessageDialog dialog = new MessageDialog(mErrorLoader.GetString("devicesPlayerError"));
-            //    await dialog.ShowAsync();
-            //    return;
-            //}
-
             if (mLibrary == null)
             {
                 MessageDialog dialog = new MessageDialog(mErrorLoader.GetString("devicesLibraryError"));
@@ -279,8 +273,39 @@ namespace PlayerExtension
 
         private void GoToNextPage()
         {
-            if (this.Frame != null)
+            if (this.Frame != null && false)
+            {
                 this.Frame.Navigate(typeof(PlayerExtensionPage));
+            }
+            else
+            {
+                Frame rootFrame = Window.Current.Content as Frame;
+                rootFrame = null;
+                // Не повторяйте инициализацию приложения, если в окне уже имеется содержимое,
+                // только обеспечьте активность окна
+                if (rootFrame == null)
+                {
+                    // Создание фрейма, который станет контекстом навигации, и переход к первой странице
+                    rootFrame = new Frame();
+
+                    SuspensionManager.RegisterFrame(rootFrame, "AppFrame");
+                    // Размещение фрейма в текущем окне
+                    Window.Current.Content = rootFrame;
+                }
+
+                if (rootFrame.Content == null)
+                {
+                    // Если стек навигации не восстанавливается для перехода к первой странице,
+                    // настройка новой страницы путем передачи необходимой информации в качестве параметра
+                    // навигации
+                    if (!rootFrame.Navigate(typeof(PlayerExtensionPage)))
+                    {
+                        throw new Exception("Failed to create initial page");
+                    }
+                }
+                // Обеспечение активности текущего окна
+                Window.Current.Activate();
+            }
         }
     }
 }
