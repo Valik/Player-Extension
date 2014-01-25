@@ -22,6 +22,7 @@ using Windows.UI;
 using Windows.ApplicationModel.Resources;
 using PlayerExtension.Common;
 using Windows.ApplicationModel.Activation;
+using PlayerExtension.Log;
 
 // Документацию по шаблону элемента "Основная страница" см. по адресу http://go.microsoft.com/fwlink/?LinkId=234237
 
@@ -257,28 +258,38 @@ namespace PlayerExtension
 
         private async void forwardButton_Click(object sender, RoutedEventArgs e)
         {
-            if (mLibrary == null)
+            try
             {
-                MessageDialog dialog = new MessageDialog(mErrorLoader.GetString("devicesLibraryError"));
-                await dialog.ShowAsync();
-                return;
+                if (mLibrary == null)
+                {
+                    MessageDialog dialog = new MessageDialog(mErrorLoader.GetString("devicesLibraryError"));
+                    await dialog.ShowAsync();
+                    return;
+                }
+
+                PlayerConnectorConfig connectorConfig = mDevInfo == null ? new PlayerConnectorConfig(mLibrary) :
+                                                                           new PlayerConnectorConfig(mDevInfo, mLibrary);
+                ExtConfig.playerConnectorConfig = connectorConfig;
+
+                Logger.Log.Debug("Devices Page: All ok in saving config");
+                GoToNextPage();
             }
-
-            PlayerConnectorConfig connectorConfig = mDevInfo == null ? new PlayerConnectorConfig(mLibrary) :
-                                                                       new PlayerConnectorConfig(mDevInfo, mLibrary);
-            ExtConfig.playerConnectorConfig = connectorConfig;
-
-            GoToNextPage();
+            catch (Exception ex)
+            {
+                Logger.Log.Error("Devices Page: Exception in navigating from devices to main page :" + ex.Message);
+            }
         }
 
         private void GoToNextPage()
         {
-            if (this.Frame != null && false)
+            if (this.Frame != null)
             {
+                Logger.Log.Debug("Devices Page: Frame of page is NOT NULL");
                 this.Frame.Navigate(typeof(PlayerExtensionPage));
             }
             else
             {
+                Logger.Log.Debug("Devices Page: Frame of page is NULL");
                 Frame rootFrame = Window.Current.Content as Frame;
                 rootFrame = null;
                 // Не повторяйте инициализацию приложения, если в окне уже имеется содержимое,

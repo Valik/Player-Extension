@@ -142,6 +142,8 @@
     <Compile Include="LastFMPage.xaml.cs">
       <DependentUpon>LastFMPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Log\Logger.cs" />
+    <Compile Include="Log\LoggerEventListener.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>

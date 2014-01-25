@@ -1,6 +1,8 @@
 ﻿using PlayerExtension.Common;
+using PlayerExtension.Log;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.IO;
 using System.Linq;
 using Windows.ApplicationModel;
@@ -78,6 +80,12 @@ namespace PlayerExtension
 
             if (rootFrame.Content == null)
             {
+                // First time execution, initialize the logger
+                var verboseListener = new LoggerEventListener("MyListenerVerbose");
+                var informationListener = new LoggerEventListener("MyListenerInformation");
+
+                verboseListener.EnableEvents(Logger.Log, EventLevel.Verbose);
+                informationListener.EnableEvents(Logger.Log, EventLevel.Informational);
                 // Если стек навигации не восстанавливается для перехода к первой странице,
                 // настройка новой страницы путем передачи необходимой информации в качестве параметра
                 // навигации
